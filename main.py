@@ -1,5 +1,7 @@
 # main.py
 import time, os
+import random
+import json
 
 import schedule
 import discord
@@ -13,7 +15,18 @@ WORDLE_ROLE_NAME = os.getenv('WORDLE_ROLE_NAME')
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True
 client = discord.Client(intents=intents)
+
+# should use json to store bot configurations and questions
+
+config = {}
+config["guild_id"] = ""
+config["guild_config"] = {}
+config["guild_config"]["target_channel"] = ""
+config["guild_config"]["questions"] = []
+config["guild_config"]["ignored_roles"] = []
+config["guild_config"]["admin_channel"] = ""
 
 @client.event
 async def on_ready():
@@ -22,12 +35,35 @@ async def on_ready():
     # read from file 'questions.txt', then pre-load into memory
     # need a file watcher
 
+@discord.ext.tasks.loop(hours=24)
+async def qotd(ctx):
+    print(f'Printing QOTD')
+    channel = bot.get_channel(config["guild_config"]["target_channel"])
+    users = ctx.guild.members
+    user = random.sample(users, 2)
+
+    await ctx.guild.channel.send(f'Hey {user}, it\'s your turn today! Tell us:\nHow\'s life going for you?\n- OR - \nLeave a positive message for everyone!')
+
 
 bot = commands.Bot(command_prefix='$', intents=intents)
 
 @bot.command()
+async def setup(ctx):
+    print(f'Setting up bot')
+
+@bot.command()
+async def test(ctx):
+    print(f'Test sending QOTD')
+
+bot.add_command(test)
+
+@bot.command()
 async def qotd(ctx):
     print(f'Printing QOTD')
+    users = ctx.guild.members
+    user = random.sample(users, 2)
+
+    await ctx.guild.channel.send(f'Hey {user}, it\'s your turn today! Tell us:\nHow\'s life going for you?\n- OR - \nLeave a positive message for everyone!')
 
 bot.add_command(qotd)
 
